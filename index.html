@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Master Command // Super Admin</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
@@ -20,9 +20,18 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
-        body { background-color: #0f172a; font-family: 'Space Grotesk', sans-serif; color: #e2e8f0; -webkit-tap-highlight-color: transparent; }
+        body { 
+            background-color: #0f172a; 
+            font-family: 'Space Grotesk', sans-serif; 
+            color: #e2e8f0; 
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            min-height: 100vh;
+        }
         
-        /* Glassmorphism Cards */
+        /* Glassmorphism */
         .glass-panel {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(10px);
@@ -38,24 +47,35 @@
         /* Status Dots */
         .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; }
         .dot.green { background-color: #10b981; box-shadow: 0 0 10px #10b981; }
-        .dot.red { background-color: #ef4444; }
-        .dot.yellow { background-color: #f59e0b; }
         
         /* Auth Screen */
         #auth-overlay {
-            position: fixed; inset: 0; z-index: 50;
-            background: #020617;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 50; background: #020617;
             display: flex; justify-content: center; align-items: center;
+            padding-top: env(safe-area-inset-top);
         }
         .pin-input {
             background: transparent; border-bottom: 2px solid #334155;
             color: white; font-size: 2rem; letter-spacing: 1rem;
-            text-align: center; width: 200px; outline: none;
+            text-align: center; width: 200px; outline: none; border-radius: 0;
         }
         .pin-input:focus { border-color: #3b82f6; }
+
+        /* iOS Install Prompt */
+        #ios-install-prompt {
+            display: none; position: fixed; bottom: 20px; left: 50%; 
+            transform: translateX(-50%); width: 90%; max-width: 400px;
+            background: rgba(15, 23, 42, 0.95); border: 1px solid #334155;
+            backdrop-filter: blur(10px); padding: 15px; border-radius: 16px;
+            z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            animation: slideUp 0.5s ease-out;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+        }
+        @keyframes slideUp { from { transform: translate(-50%, 100%); } to { transform: translate(-50%, 0); } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="flex flex-col">
 
     <div id="auth-overlay">
         <div class="text-center">
@@ -67,20 +87,18 @@
 
     <main id="dashboard" class="flex-1 p-6 hidden">
         
-        <header class="flex justify-between items-center mb-10">
+        <header class="flex justify-between items-center mb-10 mt-2">
             <div>
                 <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Command Center</h1>
                 <p class="text-slate-500 text-sm">Overview across 4 distinct systems</p>
             </div>
-            <div class="flex gap-4">
-                <div class="text-right">
-                    <div id="clock" class="text-xl font-mono font-bold text-slate-200">00:00</div>
-                    <div class="text-xs text-green-400"><span class="dot green mr-2"></span>Systems Nominal</div>
-                </div>
+            <div class="text-right">
+                <div id="clock" class="text-xl font-mono font-bold text-slate-200">00:00</div>
+                <div class="text-xs text-green-400"><span class="dot green mr-2"></span>Systems Nominal</div>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pb-6">
 
             <div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
@@ -112,7 +130,7 @@
                 </div>
                 <div class="flex justify-between items-start mb-4">
                     <div class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/30">WSL APP</div>
-                    <button onclick="launch('wsl')" class="text-slate-400 hover:text-white"><i class="fas fa-external-link-alt"></i></button>
+                    <button onclick="launch('wsl_analytics')" class="text-slate-400 hover:text-white"><i class="fas fa-external-link-alt"></i></button>
                 </div>
                 <h2 class="text-xl font-bold text-white mb-1">Waktu Solat</h2>
                 <p class="text-xs text-slate-500 mb-6">Users & Content Management</p>
@@ -189,19 +207,13 @@
 
     <script>
         // ============================================
-        // PWA REGISTRATION
+        // 1. CONFIGURATION
         // ============================================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW Registered'))
-                .catch(err => console.log('SW Fail:', err));
-            });
-        }
+        
+        // --- IMPORTANT: SET TO 'false' TO USE REAL FIREBASE DATA ---
+        const DEMO_MODE = true; 
 
-        // ============================================
-        // 1. CONFIGURE YOUR URLS HERE
-        // ============================================
+        // YOUR ADMIN LINKS
         const ADMIN_URLS = {
             pipahV5: "https://pipahcookiesapp.github.io/com/admin.html", 
             wsl_analytics: "https://twolife-v1.github.io/my/admin.html",
@@ -210,126 +222,125 @@
             pipahHQ: "https://rspipahcookies.github.io/my/HQ_Admin.html"
         };
 
-        function launch(key) {
-            const url = ADMIN_URLS[key];
-            if(url && url.includes('your-')) {
-                alert("Please configure the URLs in the SuperAdmin.html file first!");
-            } else {
-                window.open(url, '_blank');
-            }
-        }
+        // YOUR FIREBASE KEYS
+        const FIREBASE_CONFIGS = {
+            pipahV5: { apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0", projectId: "pipahcookies-21e38", appId: "1:162482379926:web:14d16f5a2444816876f6b7" },
+            wsl: { apiKey: "AIzaSyBQMVNRDYsKHRj_-bwKbFICyN6XseL3CDI", databaseURL: "https://waktusolatlite-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "waktusolatlite" },
+            arcade: { apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s", databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com", projectId: "wofplay-123" },
+            hq: { apiKey: "AIzaSyABXTYtbuFrlYo3AubzNQKOE2hRWSkompU", projectId: "pipahcookies-d6b3b" }
+        };
 
         // ============================================
-        // 2. FIREBASE CONFIGS
-        // ============================================
-        
-        // A. Pipah Admin 5.0 (Firestore)
-        const cfgPipahV5 = { apiKey: "AIzaSyA2Y2cOh3J7U916Ip0tnDDFVs2fK6sACl0", projectId: "pipahcookies-21e38", appId: "1:162482379926:web:14d16f5a2444816876f6b7" };
-
-        // B. Waktu Solat Lite (Realtime DB)
-        const cfgWSL = { apiKey: "AIzaSyBQMVNRDYsKHRj_-bwKbFICyN6XseL3CDI", databaseURL: "https://waktusolatlite-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "waktusolatlite" };
-
-        // C. Arcade Galaxy (Realtime DB)
-        const cfgArcade = { apiKey: "AIzaSyCYPD6eFQvtwi6CMBkAbQ1SmkWA2qtby9s", databaseURL: "https://wofplay-123-default-rtdb.firebaseio.com", projectId: "wofplay-123" };
-
-        // D. Pipah HQ / Legacy (Firestore)
-        const cfgPipahHQ = { apiKey: "AIzaSyABXTYtbuFrlYo3AubzNQKOE2hRWSkompU", projectId: "pipahcookies-d6b3b" };
-
-        // ============================================
-        // 3. INITIALIZATION & LOGIC
+        // 2. CORE SYSTEM
         // ============================================
 
-        // Initialize Multiple Apps
-        let appV5, appWSL, appArcade, appHQ;
-
-        function initSystems() {
-            try {
-                // Initialize distinct apps by name to avoid conflict
-                appV5 = firebase.initializeApp(cfgPipahV5, "PipahV5");
-                appWSL = firebase.initializeApp(cfgWSL, "WSL");
-                appArcade = firebase.initializeApp(cfgArcade, "Arcade");
-                appHQ = firebase.initializeApp(cfgPipahHQ, "PipahHQ");
-
-                startListeners();
-            } catch(e) {
-                console.error("Firebase Init Error:", e);
-                alert("Error initializing systems. Check console.");
-            }
-        }
-
-        function startListeners() {
-            // --- 1. PIPAH V5 LISTENERS (Firestore) ---
-            const dbV5 = appV5.firestore();
-            dbV5.collection('products').onSnapshot(snap => {
-                document.getElementById('p5-products').innerText = snap.size;
-            });
-            dbV5.collection('trending_products').onSnapshot(snap => {
-                document.getElementById('p5-trending').innerText = snap.size;
-            });
-
-            // --- 2. WSL LISTENERS (Realtime DB) ---
-            const rtdbWSL = appWSL.database();
-            rtdbWSL.ref('users').on('value', snap => {
-                const users = snap.val() || {};
-                const total = Object.keys(users).length;
-                
-                // Calc Active (Last 24h)
-                const oneDayAgo = Date.now() - (86400 * 1000);
-                let active = 0;
-                Object.values(users).forEach(u => {
-                    if(u.lastActive && u.lastActive > oneDayAgo) active++;
-                });
-
-                document.getElementById('wsl-users').innerText = total;
-                document.getElementById('wsl-active').innerText = active;
-            });
-
-            // --- 3. ARCADE LISTENERS (Realtime DB) ---
-            const rtdbArcade = appArcade.database();
-            rtdbArcade.ref('stats/visits').on('value', snap => {
-                document.getElementById('arc-visits').innerText = snap.val() || 0;
-            });
-            rtdbArcade.ref('status').on('value', snap => {
-                const s = snap.val() || {};
-                let online = 0;
-                Object.values(s).forEach(x => { if(x.state === 'online') online++; });
-                document.getElementById('arc-online').innerText = online;
-            });
-
-            // --- 4. HQ LEGACY LISTENERS (Firestore) ---
-            const dbHQ = appHQ.firestore();
-            dbHQ.collection('orders').onSnapshot(snap => {
-                let count = 0;
-                let rev = 0;
-                snap.forEach(doc => {
-                    count++;
-                    rev += (doc.data().total || 0);
-                });
-                document.getElementById('hq-orders').innerText = count;
-                document.getElementById('hq-revenue').innerText = "RM " + rev.toFixed(0);
-            });
-        }
-
-        // ============================================
-        // 4. UI LOGIC
-        // ============================================
-        
-        // Clock
+        // CLOCK
         setInterval(() => {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit'});
         }, 1000);
 
-        // Login
+        // AUTH HANDLER
         const pinInput = document.getElementById('masterPin');
         pinInput.addEventListener('keyup', (e) => {
-            if(pinInput.value === '1234') { // <--- MASTER PIN
+            if(pinInput.value === '1234') { 
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('dashboard').classList.remove('hidden');
-                initSystems();
+                
+                if(DEMO_MODE) {
+                    startSimulation();
+                } else {
+                    initRealSystems();
+                }
             }
         });
 
+        function launch(key) {
+            const url = ADMIN_URLS[key];
+            if(url) window.open(url, '_blank');
+        }
+
+        // PWA REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+        }
+
+        // ============================================
+        // 3. SIMULATION MODE (FAKE DATA)
+        // ============================================
+        function startSimulation() {
+            console.log("Starting Simulation Mode...");
+            let data = {
+                p5Prod: 142, p5Trend: 8,
+                wslUsers: 12504, wslActive: 843,
+                arcOnline: 12, arcVisits: 3402,
+                hqOrders: 8901, hqRev: 14500
+            };
+            updateDisplay(data);
+
+            setInterval(() => {
+                data.wslActive += Math.floor(Math.random() * 5) - 2; 
+                data.arcOnline = Math.max(0, data.arcOnline + (Math.floor(Math.random() * 3) - 1));
+                data.arcVisits += Math.floor(Math.random() * 2); 
+                data.hqRev += Math.random() > 0.8 ? 50 : 0; 
+                updateDisplay(data);
+            }, 3000);
+        }
+
+        function updateDisplay(d) {
+            document.getElementById('p5-products').innerText = d.p5Prod;
+            document.getElementById('p5-trending').innerText = d.p5Trend;
+            document.getElementById('wsl-users').innerText = d.wslUsers.toLocaleString();
+            document.getElementById('wsl-active').innerText = d.wslActive;
+            document.getElementById('arc-online').innerText = d.arcOnline;
+            document.getElementById('arc-visits').innerText = d.arcVisits.toLocaleString();
+            document.getElementById('hq-orders').innerText = d.hqOrders.toLocaleString();
+            document.getElementById('hq-revenue').innerText = "RM " + d.hqRev.toLocaleString();
+        }
+
+        // ============================================
+        // 4. REAL SYSTEM MODE (FIREBASE)
+        // ============================================
+        function initRealSystems() {
+            try {
+                // Initialize Apps
+                const appV5 = firebase.initializeApp(FIREBASE_CONFIGS.pipahV5, "PipahV5");
+                const appWSL = firebase.initializeApp(FIREBASE_CONFIGS.wsl, "WSL");
+                const appArcade = firebase.initializeApp(FIREBASE_CONFIGS.arcade, "Arcade");
+                const appHQ = firebase.initializeApp(FIREBASE_CONFIGS.hq, "PipahHQ");
+
+                // Start Listeners
+                appV5.firestore().collection('products').onSnapshot(snap => 
+                    document.getElementById('p5-products').innerText = snap.size);
+                appV5.firestore().collection('trending_products').onSnapshot(snap => 
+                    document.getElementById('p5-trending').innerText = snap.size);
+
+                appWSL.database().ref('users').on('value', snap => {
+                    const users = snap.val() || {};
+                    document.getElementById('wsl-users').innerText = Object.keys(users).length;
+                });
+
+                appArcade.database().ref('stats/visits').on('value', snap => 
+                    document.getElementById('arc-visits').innerText = snap.val() || 0);
+                appArcade.database().ref('status').on('value', snap => {
+                    let online = 0;
+                    const s = snap.val() || {};
+                    Object.values(s).forEach(x => { if(x.state === 'online') online++; });
+                    document.getElementById('arc-online').innerText = online;
+                });
+
+                appHQ.firestore().collection('orders').onSnapshot(snap => {
+                    let rev = 0;
+                    snap.forEach(doc => rev += (doc.data().total || 0));
+                    document.getElementById('hq-orders').innerText = snap.size;
+                    document.getElementById('hq-revenue').innerText = "RM " + rev.toFixed(0);
+                });
+
+            } catch(e) {
+                console.error("Firebase Init Error:", e);
+                alert("System Error: Check Console");
+            }
+        }
     </script>
 </body>
 </html>
